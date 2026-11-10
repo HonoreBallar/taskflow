@@ -12,6 +12,10 @@ on:
 permissions:
   contents: read
 
+# Deux publications du même tag ne tournent jamais en parallèle
+concurrency:
+  group: release-${{ github.ref }}
+
 jobs:
   images:
     name: Image ${{ matrix.service }}

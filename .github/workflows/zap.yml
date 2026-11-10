@@ -11,6 +11,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: zap
+  cancel-in-progress: true
+
 jobs:
   zap:
     name: ZAP baseline
