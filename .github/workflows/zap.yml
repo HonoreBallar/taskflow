@@ -1,0 +1,28 @@
+name: Scan OWASP ZAP
+
+# Scan passif de l'application démarrée (en-têtes de sécurité, cookies, fuites d'information…).
+# Ne bloque rien : le rapport HTML est à lire dans les artefacts de l'exécution.
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  zap:
+    name: ZAP baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Démarrer l'application
+        uses: ./.github/actions/start-stack
+      - uses: zaproxy/action-baseline@de8ad967d3548d44ef623df22cf95c3b0baf8b25 # v0.15.0
+        with:
+          target: http://localhost
+          allow_issue_writing: false
+          fail_action: false
+          artifact_name: rapport-zap

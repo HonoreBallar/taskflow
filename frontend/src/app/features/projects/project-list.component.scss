@@ -1,0 +1,53 @@
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+
+  .search {
+    flex: 1 1 260px;
+  }
+
+  .ws {
+    flex: 0 1 220px;
+  }
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.table-wrap {
+  padding: 0;
+  overflow-x: auto;
+
+  table {
+    min-width: 760px;
+    background: transparent;
+  }
+}
+
+.name {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 140px;
+  font-size: 13px;
+
+  mat-progress-bar {
+    flex: 1;
+  }
+}
+
+.avatars {
+  display: flex;
+  gap: 2px;
+}

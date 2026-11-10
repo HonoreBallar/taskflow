@@ -1,0 +1,265 @@
+@use '@angular/material' as mat;
+
+html {
+  color-scheme: light;
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$violet-palette,
+        tertiary: mat.$azure-palette,
+      ),
+      typography: Inter,
+      density: 0,
+    )
+  );
+
+  --tf-bg: #f6f7fb;
+  --tf-surface: #ffffff;
+  --tf-surface-2: #f1f3f9;
+  --tf-border: #e4e7ef;
+  --tf-text: #0f172a;
+  --tf-muted: #64748b;
+  --tf-hover: #f1f3f9;
+  --tf-danger: #dc2626;
+}
+
+@media (prefers-color-scheme: dark) {
+  html {
+    color-scheme: dark;
+    --tf-bg: #0b0f19;
+    --tf-surface: #121826;
+    --tf-surface-2: #1a2233;
+    --tf-border: #253047;
+    --tf-text: #e5e7eb;
+    --tf-muted: #94a3b8;
+    --tf-hover: #1a2233;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, Roboto, 'Helvetica Neue', sans-serif;
+  background: var(--tf-bg);
+  color: var(--tf-text);
+}
+
+a {
+  color: var(--mat-sys-primary);
+}
+
+/* ---------- Utilitaires ---------- */
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+
+  h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 4px 0 0;
+    color: var(--tf-muted);
+  }
+
+  .actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+}
+
+.panel {
+  background: var(--tf-surface);
+  border: 1px solid var(--tf-border);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.grid {
+  display: grid;
+  gap: 16px;
+}
+
+.muted {
+  color: var(--tf-muted);
+}
+
+.full-width {
+  width: 100%;
+}
+
+.form-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  > * {
+    flex: 1 1 200px;
+  }
+}
+
+.form-col,
+.mat-mdc-dialog-content.form-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  > mat-form-field,
+  > .form-row > mat-form-field {
+    width: 100%;
+  }
+}
+
+/* Laisse la place au label flottant du premier champ dans les dialogues */
+.mat-mdc-dialog-content.form-col {
+  padding-top: 8px !important;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.priority-LOW {
+  background: #e2e8f0;
+  color: #475569;
+}
+.priority-MEDIUM {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+.priority-HIGH {
+  background: #ffedd5;
+  color: #c2410c;
+}
+.priority-CRITICAL {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.status-BACKLOG {
+  background: #e2e8f0;
+  color: #475569;
+}
+.status-TODO {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+.status-IN_PROGRESS {
+  background: #fef3c7;
+  color: #b45309;
+}
+.status-REVIEW {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+.status-DONE {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.mention {
+  color: var(--mat-sys-primary);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--mat-sys-primary) 10%, transparent);
+  border-radius: 4px;
+  padding: 0 2px;
+}
+
+button.danger,
+.mat-mdc-unelevated-button.danger {
+  --mat-button-filled-container-color: var(--tf-danger);
+  --mat-button-filled-label-text-color: #fff;
+}
+
+.toast-success {
+  --mat-snack-bar-button-color: #6ee7b7;
+}
+
+.toast-error {
+  --mat-snack-bar-button-color: #fca5a5;
+}
+
+/* Kanban : aperçu pendant le drag (rendu hors du composant) */
+.cdk-drag-preview {
+  box-shadow: 0 12px 32px rgb(15 23 42 / 22%);
+  border-radius: 12px;
+  transform: rotate(2deg);
+}
+
+.cdk-drag-animating {
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.auth-page {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+  background:
+    radial-gradient(circle at 15% 20%, rgb(139 92 246 / 18%), transparent 40%),
+    radial-gradient(circle at 85% 80%, rgb(14 165 233 / 16%), transparent 40%), var(--tf-bg);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--tf-surface);
+  border: 1px solid var(--tf-border);
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 20px 50px rgb(15 23 42 / 8%);
+
+  h1 {
+    margin: 0 0 4px;
+    font-size: 24px;
+  }
+
+  .subtitle {
+    margin: 0 0 24px;
+    color: var(--tf-muted);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 18px;
+    margin-bottom: 24px;
+    color: var(--mat-sys-primary);
+  }
+
+  .footer {
+    margin-top: 20px;
+    text-align: center;
+    color: var(--tf-muted);
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-card {
+    padding: 24px 20px;
+  }
+}

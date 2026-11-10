@@ -1,0 +1,12 @@
+# Terminaison TLS (voir docker-compose.https.yml). Certificat automatique, redirection HTTP -> HTTPS.
+{$DOMAIN} {
+	encode zstd gzip
+
+	header {
+		# Le navigateur n'utilisera plus que HTTPS pour ce domaine pendant un an
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	reverse_proxy frontend:8080
+}

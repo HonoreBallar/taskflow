@@ -1,0 +1,72 @@
+<div class="filters">
+  <mat-form-field class="search">
+    <mat-icon matPrefix>search</mat-icon>
+    <mat-label>Rechercher une tâche</mat-label>
+    <input matInput [ngModel]="search()" (ngModelChange)="search.set($event)" />
+  </mat-form-field>
+  <mat-form-field class="select">
+    <mat-label>Priorité</mat-label>
+    <mat-select [ngModel]="priorityFilter()" (ngModelChange)="priorityFilter.set($event)">
+      <mat-option [value]="null">Toutes</mat-option>
+      @for (p of priorities; track p) {
+        <mat-option [value]="p">{{ priorityLabels[p] }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field class="select">
+    <mat-label>Responsable</mat-label>
+    <mat-select [ngModel]="assigneeFilter()" (ngModelChange)="assigneeFilter.set($event)">
+      <mat-option [value]="null">Tous</mat-option>
+      <mat-option value="me">Mes tâches</mat-option>
+      @for (m of ctx.members(); track m.id) {
+        <mat-option [value]="m.id">{{ m.firstname }} {{ m.lastname }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+  @if (hasFilter()) {
+    <button mat-button (click)="clearFilters()"><mat-icon>filter_alt_off</mat-icon>Effacer</button>
+  }
+  <span class="grow"></span>
+  @if (ctx.canManage()) {
+    <button mat-flat-button (click)="newTask()" data-cy="new-task">
+      <mat-icon>add</mat-icon>Nouvelle tâche
+    </button>
+  }
+</div>
+
+@if (loading()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+<div class="board" cdkDropListGroup>
+  @for (status of statuses; track status) {
+    @let tasks = filteredColumns()[status];
+    <section class="column" [attr.data-cy]="'column-' + status">
+      <header>
+        <span class="dot" [style.background]="statusColors[status]"></span>
+        <h3>{{ statusLabels[status] }}</h3>
+        <span class="count">{{ tasks.length }}</span>
+        @if (ctx.canManage()) {
+          <button
+            mat-icon-button
+            class="add"
+            (click)="newTask(status)"
+            [matTooltip]="'Ajouter dans ' + statusLabels[status]"
+          >
+            <mat-icon>add</mat-icon>
+          </button>
+        }
+      </header>
+
+      <div class="list" cdkDropList [cdkDropListData]="status" (cdkDropListDropped)="drop($event)">
+        @for (t of tasks; track t.id) {
+          <app-task-card cdkDrag [cdkDragData]="t" [task]="t" (opened)="openDetail($event)">
+            <div class="placeholder" *cdkDragPlaceholder></div>
+          </app-task-card>
+        } @empty {
+          <div class="empty">Déposez une tâche ici</div>
+        }
+      </div>
+    </section>
+  }
+</div>

@@ -1,0 +1,82 @@
+# Modèle rendu au démarrage du conteneur : seule ${TRUSTED_PROXY} est substituée.
+
+# Schéma vu par le client : celui annoncé par le proxy TLS placé devant ce conteneur, sinon celui de la requête.
+map $http_x_forwarded_proto $client_scheme {
+  default $scheme;
+  https   https;
+}
+
+# Port utilisé par le client, lu dans l'en-tête Host (vide = port par défaut du schéma). Le backend en a besoin
+# pour reconnaître les requêtes de même origine quand l'application n'est pas publiée sur le port 80/443.
+map $http_host $client_port {
+  default                    "";
+  "~:(?<host_port>\d+)$"     $host_port;
+}
+
+server {
+  listen 8080;
+  server_name _;
+  root /usr/share/nginx/html;
+  index index.html;
+
+  server_tokens off;
+  client_max_body_size 25m;
+
+  gzip on;
+  gzip_types text/plain text/css application/javascript application/json image/svg+xml;
+
+  # Adresse IP du client. Un en-tête X-Forwarded-For n'est cru que s'il vient du proxy de confiance
+  # (le proxy TLS de docker-compose.https.yml) ; envoyé par un client quelconque, il est ignoré.
+  # L'adresse retenue est ensuite transmise telle quelle au backend : la limitation de débit par IP
+  # ne peut donc pas être contournée en falsifiant cet en-tête.
+  set_real_ip_from ${TRUSTED_PROXY};
+  real_ip_header X-Forwarded-For;
+
+  # API REST -> backend Spring Boot (qui pose ses propres en-têtes de sécurité)
+  location /api/ {
+    proxy_pass http://backend:8080;
+    proxy_set_header Host $http_host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Forwarded-Proto $client_scheme;
+    proxy_set_header X-Forwarded-Port $client_port;
+  }
+
+  # WebSocket STOMP / SockJS -> backend
+  location /ws {
+    proxy_pass http://backend:8080;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host $http_host;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Forwarded-Proto $client_scheme;
+    proxy_set_header X-Forwarded-Port $client_port;
+    proxy_read_timeout 3600s;
+  }
+
+  # Swagger UI : ne répond que si SWAGGER_ENABLED=true côté backend (désactivé par défaut)
+  location ~ ^/(swagger-ui|v3/api-docs) {
+    proxy_pass http://backend:8080;
+    proxy_set_header Host $http_host;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Forwarded-Proto $client_scheme;
+    proxy_set_header X-Forwarded-Port $client_port;
+  }
+
+  # Fichiers statiques avec hash : cache long
+  # (add_header dans un bloc location annule ceux du niveau supérieur : le snippet est inclus dans chaque bloc)
+  location ~* \.(?:js|css|woff2?|png|jpg|svg|ico)$ {
+    expires 1y;
+    add_header Cache-Control "public, immutable";
+    include /etc/nginx/snippets/security-headers.conf;
+    try_files $uri =404;
+  }
+
+  # SPA : toutes les routes Angular renvoient index.html
+  location / {
+    add_header Cache-Control "no-cache";
+    include /etc/nginx/snippets/security-headers.conf;
+    try_files $uri $uri/ /index.html;
+  }
+}

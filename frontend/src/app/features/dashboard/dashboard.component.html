@@ -1,0 +1,97 @@
+<div class="page-header">
+  <div>
+    <h1>{{ greeting() }}, {{ auth.currentUser()?.firstname }}</h1>
+    <p>Voici l'avancement de vos projets.</p>
+  </div>
+  @if (auth.isManager()) {
+    <div class="actions">
+      <a mat-flat-button routerLink="/projects" [queryParams]="{ new: 1 }"
+        ><mat-icon>add</mat-icon>Nouveau projet</a
+      >
+    </div>
+  }
+</div>
+
+@if (data() === undefined) {
+  <mat-progress-bar mode="indeterminate" />
+} @else if (data(); as d) {
+  <section class="stats">
+    <app-stat-card
+      label="Projets"
+      [value]="d.projectCount"
+      icon="folder_open"
+      color="#6366f1"
+      (selected)="goTo('/projects')"
+    />
+    <app-stat-card
+      label="Tâches"
+      [value]="d.taskCount"
+      icon="checklist"
+      color="#0ea5e9"
+      (selected)="goTo('/my-tasks')"
+    />
+    <app-stat-card
+      label="Tâches terminées"
+      [value]="d.doneCount"
+      icon="task_alt"
+      color="#10b981"
+      (selected)="goTo('/my-tasks')"
+    />
+    <app-stat-card
+      label="Tâches en retard"
+      [value]="d.overdueCount"
+      icon="schedule"
+      color="#ef4444"
+      (selected)="goTo('/my-tasks')"
+    />
+  </section>
+
+  <section class="charts">
+    <div class="panel">
+      <h2>Répartition des tâches</h2>
+      @if (statusChart(); as cfg) {
+        <div class="chart-box"><app-chart [config]="cfg" /></div>
+      } @else {
+        <app-empty-state icon="donut_large" title="Aucune tâche pour le moment" />
+      }
+    </div>
+    <div class="panel">
+      <h2>Progression par projet</h2>
+      @if (projectChart(); as cfg) {
+        <div class="chart-box"><app-chart [config]="cfg" /></div>
+      } @else {
+        <app-empty-state icon="bar_chart" title="Aucun projet" />
+      }
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-title">
+      <h2>Mes prochaines tâches</h2>
+      <a mat-button routerLink="/my-tasks">Tout voir</a>
+    </div>
+    @for (t of upcoming(); track t.id) {
+      <a
+        class="task-row"
+        [routerLink]="['/projects', t.projectId, 'board']"
+        [queryParams]="{ task: t.id }"
+      >
+        <span class="chip status-{{ t.status }}">{{ t.status | statusLabel }}</span>
+        <span class="title">{{ t.title }}</span>
+        <span class="project muted">{{ t.projectName }}</span>
+        <span class="chip priority-{{ t.priority }}">{{ t.priority | priorityLabel }}</span>
+        <span class="due" [class.overdue]="t.overdue">
+          @if (t.dueDate) {
+            <mat-icon inline>event</mat-icon>{{ t.dueDate | date: 'd MMM' }}
+          }
+        </span>
+      </a>
+    } @empty {
+      <app-empty-state
+        icon="celebration"
+        title="Rien à faire"
+        message="Aucune tâche ne vous est affectée."
+      />
+    }
+  </section>
+}

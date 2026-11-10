@@ -1,0 +1,77 @@
+name: taskflow
+
+# Les secrets n'ont volontairement aucune valeur par défaut : `docker compose up` échoue tant que
+# POSTGRES_PASSWORD, JWT_SECRET et ADMIN_PASSWORD ne sont pas définis dans .env (voir .env.example).
+#
+# Production (HTTPS automatique) :
+#   docker compose -f docker-compose.yml -f docker-compose.https.yml up -d --build
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-taskflow}
+      POSTGRES_USER: ${POSTGRES_USER:-taskflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Definir POSTGRES_PASSWORD dans .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      # Accessible uniquement depuis la machine hôte (outils de développement), jamais depuis le réseau
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-taskflow}
+      DB_USER: ${POSTGRES_USER:-taskflow}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?Definir POSTGRES_PASSWORD dans .env}
+      JWT_SECRET: ${JWT_SECRET:?Definir JWT_SECRET dans .env (openssl rand -base64 64)}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost,http://localhost:4200}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@taskflow.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Definir ADMIN_PASSWORD dans .env}
+      # Cookie de session (HttpOnly). COOKIE_SECURE=true dès que l'application est servie en HTTPS.
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      COOKIE_SAME_SITE: ${COOKIE_SAME_SITE:-Strict}
+      # Emails (confirmation d'adresse, réinitialisation de mot de passe)
+      EMAIL_VERIFICATION: ${EMAIL_VERIFICATION:-true}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_AUTH: ${SMTP_AUTH:-true}
+      SMTP_STARTTLS: ${SMTP_STARTTLS:-true}
+      MAIL_FROM: ${MAIL_FROM:-no-reply@taskflow.local}
+      AUTH_RATE_LIMIT_PER_MINUTE: ${AUTH_RATE_LIMIT_PER_MINUTE:-20}
+      # Options de développement
+      SEED_DEMO: ${SEED_DEMO:-false}
+      SWAGGER_ENABLED: ${SWAGGER_ENABLED:-false}
+      LOG_RESET_LINKS: ${LOG_RESET_LINKS:-false}
+    volumes:
+      - uploads:/app/uploads
+    ports:
+      # L'API est exposée au public par Nginx (service frontend) ; ce port sert au développement local
+      - "127.0.0.1:${BACKEND_PORT:-8080}:8080"
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      # FRONTEND_BIND=127.0.0.1 : l'application n'est joignable que depuis cette machine
+      - "${FRONTEND_BIND:-0.0.0.0}:${FRONTEND_PORT:-80}:8080"
+
+volumes:
+  pgdata:
+  uploads:

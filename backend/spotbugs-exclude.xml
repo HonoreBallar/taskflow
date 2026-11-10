@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Défauts SpotBugs volontairement ignorés. Chaque exclusion est ciblée (classe + règle) et justifiée ici :
+     toute alerte qui n'est pas listée fait échouer `mvn verify`. -->
+<FindBugsFilter>
+    <!-- Entités JPA, DTO Lombok et beans Spring : exposer une référence injectée ou un champ est le fonctionnement
+         normal de ces frameworks (injection par constructeur, getters générés). -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- Journal d'activité réservé à ROLE_ADMIN : l'entité n'a ni relation ni champ sensible
+         (id, auteur, action, date), la renvoyer telle quelle ne divulgue rien. -->
+    <Match>
+        <Class name="com.taskflow.admin.AdminController"/>
+        <Method name="logs"/>
+        <Bug pattern="ENTITY_LEAK"/>
+    </Match>
+
+    <!-- SecureRandom utilisé une seule fois, au démarrage, pour générer un mot de passe ou un secret. -->
+    <Match>
+        <Or>
+            <Class name="com.taskflow.config.DataSeeder"/>
+            <Class name="com.taskflow.security.JwtService"/>
+        </Or>
+        <Bug pattern="DMI_RANDOM_USED_ONLY_ONCE"/>
+    </Match>
+
+    <!-- Le constructeur refuse volontairement un secret JWT faible : l'application ne doit pas démarrer. -->
+    <Match>
+        <Class name="com.taskflow.security.JwtService"/>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    </Match>
+
+    <!-- Réponses JSON d'erreur écrites par les filtres : texte constant, aucune donnée de la requête. -->
+    <Match>
+        <Or>
+            <Class name="com.taskflow.security.AuthRateLimitFilter"/>
+            <Class name="com.taskflow.security.JwtAuthFilter"/>
+        </Or>
+        <Bug pattern="XSS_SERVLET"/>
+    </Match>
+
+    <!-- accessor.getCommand() est testé non nul à la ligne précédente. -->
+    <Match>
+        <Class name="com.taskflow.config.WebSocketAuthInterceptor"/>
+        <Method name="preSend"/>
+        <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>
+    </Match>
+</FindBugsFilter>

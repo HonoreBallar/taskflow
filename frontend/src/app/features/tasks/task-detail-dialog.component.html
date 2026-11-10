@@ -1,0 +1,109 @@
+@if (task(); as t) {
+  <div class="head">
+    <div class="head-main">
+      <span class="project muted">{{ t.projectName }} · #{{ t.id }}</span>
+      <h2>{{ t.title }}</h2>
+    </div>
+    <div class="head-actions">
+      @if (canEdit()) {
+        <button mat-icon-button (click)="edit(t)" matTooltip="Modifier" data-cy="task-edit">
+          <mat-icon>edit</mat-icon>
+        </button>
+      }
+      @if (canManage()) {
+        <button mat-icon-button (click)="remove(t)" matTooltip="Supprimer" data-cy="task-delete">
+          <mat-icon>delete</mat-icon>
+        </button>
+      }
+      <button mat-icon-button mat-dialog-close matTooltip="Fermer">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <mat-dialog-content class="body">
+    <div class="main">
+      <section>
+        <h3>Description</h3>
+        <p class="description">{{ t.description || 'Aucune description.' }}</p>
+      </section>
+
+      <mat-tab-group animationDuration="120ms">
+        <mat-tab [label]="'Commentaires (' + t.commentCount + ')'">
+          <app-comment-thread [taskId]="t.id" (changed)="refreshTask()" />
+        </mat-tab>
+        <mat-tab [label]="'Pièces jointes (' + t.attachmentCount + ')'">
+          <app-attachment-panel target="tasks" [targetId]="t.id" (changed)="refreshTask()" />
+        </mat-tab>
+      </mat-tab-group>
+    </div>
+
+    <aside class="side">
+      <div class="field">
+        <span class="label">Statut</span>
+        <button
+          mat-stroked-button
+          [matMenuTriggerFor]="statusMenu"
+          [disabled]="!canEdit()"
+          class="status-btn"
+          data-cy="task-status"
+        >
+          <span class="chip status-{{ t.status }}">{{ t.status | statusLabel }}</span>
+          <mat-icon iconPositionEnd>expand_more</mat-icon>
+        </button>
+        <mat-menu #statusMenu="matMenu">
+          @for (s of statuses; track s) {
+            <button mat-menu-item (click)="changeStatus(t, s)">
+              <span class="chip status-{{ s }}">{{ statusLabels[s] }}</span>
+            </button>
+          }
+        </mat-menu>
+      </div>
+
+      <div class="field">
+        <span class="label">Priorité</span>
+        <span class="chip priority-{{ t.priority }}">{{ t.priority | priorityLabel }}</span>
+      </div>
+
+      <div class="field">
+        <span class="label">Responsable</span>
+        <span class="person">
+          <app-avatar [user]="t.assignee" [size]="28" />
+          {{ t.assignee | fullName: 'Non affectée' }}
+        </span>
+      </div>
+
+      <div class="field">
+        <span class="label">Date limite</span>
+        <span [class.overdue]="t.overdue">
+          {{ t.dueDate ? (t.dueDate | date: 'EEEE d MMMM y') : '—' }}
+          @if (t.overdue) {
+            <small>(en retard)</small>
+          }
+        </span>
+      </div>
+
+      <div class="field">
+        <span class="label">Blocage</span>
+        <button
+          mat-stroked-button
+          (click)="toggleBlocked(t)"
+          [disabled]="!canEdit()"
+          [class.is-blocked]="t.blocked"
+        >
+          <mat-icon>{{ t.blocked ? 'block' : 'check_circle' }}</mat-icon>
+          {{ t.blocked ? 'Bloquée' : 'Non bloquée' }}
+        </button>
+      </div>
+
+      <mat-divider />
+
+      <div class="field small muted">
+        <span>Créée par {{ t.createdBy | fullName }} {{ t.createdAt | timeAgo }}</span>
+        <span>Mise à jour {{ t.updatedAt | timeAgo }}</span>
+      </div>
+    </aside>
+  </mat-dialog-content>
+} @else {
+  <mat-dialog-content><p class="muted">Chargement…</p></mat-dialog-content>
+}

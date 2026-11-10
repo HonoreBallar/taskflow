@@ -1,0 +1,51 @@
+# Surcouche de production : HTTPS automatique devant l'application.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.https.yml up -d --build
+#
+# Caddy obtient et renouvelle seul un certificat Let's Encrypt pour DOMAIN (le domaine doit pointer vers ce
+# serveur, ports 80 et 443 ouverts), redirige HTTP vers HTTPS et envoie l'en-tête HSTS.
+# Avec DOMAIN=localhost, il émet un certificat local auto-signé (utile pour un essai).
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - frontend
+    environment:
+      DOMAIN: ${DOMAIN:?Definir DOMAIN dans .env (ex. taskflow.exemple.com)}
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - edge
+
+  frontend:
+    # Nginx n'est plus publié directement : tout le trafic passe par Caddy
+    ports: !reset []
+    environment:
+      # Seul Caddy (réseau « edge ») est autorisé à annoncer l'adresse IP réelle du client
+      TRUSTED_PROXY: 172.31.255.0/24
+    networks:
+      - default
+      - edge
+
+  backend:
+    environment:
+      COOKIE_SECURE: "true"   # le cookie de session n'est plus jamais envoyé en clair
+      CORS_ORIGINS: https://${DOMAIN}
+      FRONTEND_URL: https://${DOMAIN}
+
+networks:
+  edge:
+    ipam:
+      config:
+        - subnet: 172.31.255.0/24
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,77 @@
+<mat-sidenav-container class="shell">
+  <mat-sidenav
+    [mode]="isMobile() ? 'over' : 'side'"
+    [opened]="!isMobile()"
+    [fixedInViewport]="isMobile()"
+    class="sidenav"
+    #drawer
+  >
+    <a routerLink="/dashboard" class="brand">
+      <span class="logo"><mat-icon>bolt</mat-icon></span>
+      <span>TaskFlow</span>
+    </a>
+
+    <mat-nav-list>
+      @for (item of nav; track item.link) {
+        @if (!item.adminOnly || auth.isAdmin()) {
+          <a
+            mat-list-item
+            [routerLink]="item.link"
+            routerLinkActive="active"
+            #rla="routerLinkActive"
+            [activated]="rla.isActive"
+          >
+            <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+            <span matListItemTitle>{{ item.label }}</span>
+          </a>
+        }
+      }
+    </mat-nav-list>
+
+    <div class="sidenav-footer">
+      <a routerLink="/profile" class="me">
+        <app-avatar [user]="auth.currentUser()" [size]="36" />
+        <span class="me-text">
+          <strong>{{ auth.fullName() }}</strong>
+          <small>{{ auth.role() | roleLabel }}</small>
+        </span>
+      </a>
+    </div>
+  </mat-sidenav>
+
+  <mat-sidenav-content class="content">
+    <mat-toolbar class="topbar">
+      @if (isMobile()) {
+        <button mat-icon-button (click)="drawer.toggle()" aria-label="Menu">
+          <mat-icon>menu</mat-icon>
+        </button>
+      }
+      <app-global-search class="search" />
+      <span class="spacer"></span>
+      <app-notification-bell />
+      <button
+        mat-icon-button
+        [matMenuTriggerFor]="userMenu"
+        aria-label="Compte"
+        data-cy="user-menu"
+      >
+        <app-avatar [user]="auth.currentUser()" [size]="32" />
+      </button>
+      <mat-menu #userMenu="matMenu" xPosition="before">
+        <div class="menu-header">
+          <strong>{{ auth.fullName() }}</strong>
+          <small>{{ auth.currentUser()?.email }}</small>
+        </div>
+        <mat-divider />
+        <a mat-menu-item routerLink="/profile"><mat-icon>person</mat-icon>Mon profil</a>
+        <button mat-menu-item (click)="logout()" data-cy="logout">
+          <mat-icon>logout</mat-icon>Déconnexion
+        </button>
+      </mat-menu>
+    </mat-toolbar>
+
+    <main class="page">
+      <router-outlet />
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>

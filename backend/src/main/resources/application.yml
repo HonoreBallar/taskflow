@@ -1,0 +1,88 @@
+server:
+  port: 8080
+  # Derrière Nginx : l'adresse IP réelle du client (X-Forwarded-For) n'est prise en compte
+  # que si la requête vient d'un proxy interne (réseau privé / Docker), jamais d'un client direct.
+  forward-headers-strategy: native
+
+spring:
+  application:
+    name: taskflow
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/taskflow}
+    username: ${DB_USER:taskflow}
+    password: ${DB_PASSWORD:taskflow}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: false
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 25MB
+  # Envoi des emails (confirmation d'adresse, réinitialisation de mot de passe). Sans SMTP_HOST, rien n'est envoyé.
+  mail:
+    host: ${SMTP_HOST:}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${SMTP_AUTH:true}
+          starttls:
+            enable: ${SMTP_STARTTLS:true}
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+taskflow:
+  jwt:
+    # Aucun secret par défaut : sans JWT_SECRET, un secret aléatoire est généré à chaque démarrage.
+    secret: ${JWT_SECRET:}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:4200,http://localhost}
+  upload-dir: ${UPLOAD_DIR:./uploads}
+  frontend-url: ${FRONTEND_URL:http://localhost:4200}
+  admin:
+    email: ${ADMIN_EMAIL:admin@taskflow.com}
+    # Sans ADMIN_PASSWORD, un mot de passe aléatoire est généré et écrit une fois dans les logs.
+    password: ${ADMIN_PASSWORD:}
+  # Comptes et données de démonstration (mots de passe publics) : développement uniquement.
+  seed-demo: ${SEED_DEMO:false}
+  # Écrit dans les logs les liens envoyés par email (confirmation, réinitialisation) : développement uniquement.
+  log-reset-links: ${LOG_RESET_LINKS:false}
+  mail:
+    from: ${MAIL_FROM:no-reply@taskflow.local}
+  # Un compte créé par inscription doit confirmer son adresse email avant de pouvoir se connecter,
+  # et un changement d'adresse n'est appliqué qu'après confirmation de la nouvelle.
+  email-verification: ${EMAIL_VERIFICATION:true}
+  cookie:
+    # Cookie de session HttpOnly. secure=true dès que l'application est servie en HTTPS.
+    secure: ${COOKIE_SECURE:false}
+    # Strict par défaut ; None (avec secure=true) seulement si le front et l'API sont sur deux domaines.
+    same-site: ${COOKIE_SAME_SITE:Strict}
+  rate-limit:
+    # Appels par minute et par adresse IP sur chaque endpoint /api/auth/*
+    auth-per-minute: ${AUTH_RATE_LIMIT_PER_MINUTE:20}
+
+# La documentation de l'API n'est pas exposée par défaut (SWAGGER_ENABLED=true en développement).
+springdoc:
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLED:false}
+    path: /swagger-ui.html
+  api-docs:
+    enabled: ${SWAGGER_ENABLED:false}
+    path: /v3/api-docs
+
+management:
+  health:
+    mail:
+      enabled: false   # l'absence de SMTP ne doit pas rendre l'application « DOWN »
+  endpoints:
+    web:
+      exposure:
+        include: health,info

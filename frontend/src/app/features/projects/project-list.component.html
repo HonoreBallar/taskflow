@@ -1,0 +1,120 @@
+<div class="page-header">
+  <div>
+    <h1>Projets</h1>
+    <p>{{ filtered().length }} projet(s)</p>
+  </div>
+  <div class="actions" *appHasRole="['ADMIN', 'MANAGER']">
+    <button mat-flat-button (click)="openForm()" data-cy="new-project">
+      <mat-icon>add</mat-icon>Nouveau projet
+    </button>
+  </div>
+</div>
+
+<div class="toolbar">
+  <mat-form-field class="search">
+    <mat-icon matPrefix>search</mat-icon>
+    <mat-label>Filtrer</mat-label>
+    <input matInput [ngModel]="search()" (ngModelChange)="search.set($event)" />
+  </mat-form-field>
+  <mat-form-field class="ws">
+    <mat-label>Workspace</mat-label>
+    <mat-select [ngModel]="workspaceFilter()" (ngModelChange)="workspaceFilter.set($event)">
+      <mat-option [value]="null">Tous</mat-option>
+      @for (ws of workspaces(); track ws.id) {
+        <mat-option [value]="ws.id">{{ ws.name }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+  <mat-button-toggle-group
+    [value]="view()"
+    (change)="setView($event.value)"
+    aria-label="Affichage"
+    hideSingleSelectionIndicator
+  >
+    <mat-button-toggle value="cards" aria-label="Vue carte"
+      ><mat-icon>grid_view</mat-icon></mat-button-toggle
+    >
+    <mat-button-toggle value="table" aria-label="Vue tableau"
+      ><mat-icon>table_rows</mat-icon></mat-button-toggle
+    >
+  </mat-button-toggle-group>
+</div>
+
+@if (loading()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+@if (!loading() && filtered().length === 0) {
+  <app-empty-state
+    icon="folder_open"
+    title="Aucun projet"
+    message="Créez un projet ou rejoignez un workspace pour commencer."
+  />
+} @else if (view() === 'cards') {
+  <div class="cards">
+    @for (p of filtered(); track p.id) {
+      <app-project-card [project]="p" />
+    }
+  </div>
+} @else {
+  <div class="panel table-wrap">
+    <table mat-table [dataSource]="filtered()" [trackBy]="trackById">
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>Nom</th>
+        <td mat-cell *matCellDef="let p">
+          <a [routerLink]="['/projects', p.id]" class="name">{{ p.name }}</a>
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="workspace">
+        <th mat-header-cell *matHeaderCellDef>Workspace</th>
+        <td mat-cell *matCellDef="let p">{{ p.workspaceName }}</td>
+      </ng-container>
+      <ng-container matColumnDef="progress">
+        <th mat-header-cell *matHeaderCellDef>Progression</th>
+        <td mat-cell *matCellDef="let p">
+          <div class="progress">
+            <mat-progress-bar mode="determinate" [value]="p.progress" /><span
+              >{{ p.progress }}%</span
+            >
+          </div>
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="tasks">
+        <th mat-header-cell *matHeaderCellDef>Tâches</th>
+        <td mat-cell *matCellDef="let p">{{ p.doneCount }}/{{ p.taskCount }}</td>
+      </ng-container>
+      <ng-container matColumnDef="members">
+        <th mat-header-cell *matHeaderCellDef>Membres</th>
+        <td mat-cell *matCellDef="let p">
+          <div class="avatars">
+            @for (m of p.members.slice(0, 3); track m.id) {
+              <app-avatar [user]="m" [size]="24" />
+            }
+          </div>
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="endDate">
+        <th mat-header-cell *matHeaderCellDef>Échéance</th>
+        <td mat-cell *matCellDef="let p">{{ p.endDate ? (p.endDate | date: 'd MMM y') : '—' }}</td>
+      </ng-container>
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let p">
+          @if (auth.isManager()) {
+            <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="Actions">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #menu="matMenu">
+              <button mat-menu-item (click)="openForm(p)"><mat-icon>edit</mat-icon>Modifier</button>
+              <button mat-menu-item (click)="remove(p)">
+                <mat-icon>delete</mat-icon>Supprimer
+              </button>
+            </mat-menu>
+          }
+        </td>
+      </ng-container>
+      <tr mat-header-row *matHeaderRowDef="columns"></tr>
+      <tr mat-row *matRowDef="let row; columns: columns"></tr>
+    </table>
+  </div>
+}

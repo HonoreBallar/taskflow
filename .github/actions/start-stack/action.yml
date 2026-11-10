@@ -1,0 +1,41 @@
+name: Démarrer TaskFlow
+description: >
+  Construit les images et démarre toute l'application avec docker compose (base vide, données de démonstration),
+  puis attend que l'API et le frontend répondent sur http://localhost.
+
+runs:
+  using: composite
+  steps:
+    - name: Générer un .env jetable
+      shell: bash
+      run: |
+        # Secrets aléatoires, propres à cette exécution : rien n'est stocké dans le dépôt ni dans GitHub.
+        {
+          echo "POSTGRES_PASSWORD=$(openssl rand -hex 24)"
+          echo "JWT_SECRET=$(openssl rand -hex 48)"
+          echo "ADMIN_PASSWORD=$(openssl rand -hex 16)"
+          echo "SEED_DEMO=true"
+          echo "FRONTEND_BIND=127.0.0.1"
+        } > .env
+
+    - name: Construire et démarrer
+      shell: bash
+      run: docker compose up -d --build
+
+    - name: Attendre l'API et le frontend
+      shell: bash
+      run: |
+        for url in http://localhost:8080/actuator/health http://localhost/; do
+          echo "Attente de $url"
+          for i in $(seq 1 60); do
+            if curl --silent --fail --output /dev/null "$url"; then
+              echo "OK après $((i * 3)) s"
+              continue 2
+            fi
+            sleep 3
+          done
+          echo "::error::$url ne répond pas après 3 minutes"
+          docker compose ps
+          docker compose logs --tail 200
+          exit 1
+        done

@@ -1,0 +1,29 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:taskflow;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+
+taskflow:
+  jwt:
+    secret: test-secret-test-secret-test-secret-test-secret-test-secret-1234567890
+    expiration-ms: 3600000
+  cors:
+    allowed-origins: http://localhost:4200
+  upload-dir: ./target/test-uploads
+  frontend-url: http://localhost:4200
+  admin:
+    email: admin@taskflow.com
+    password: Admin123!
+  seed-demo: true
+  mail:
+    from: no-reply@taskflow.test
+  # Les parcours existants ouvrent une session dès l'inscription ; la vérification d'email
+  # est testée à part (EmailVerificationTest) avec la valeur de production.
+  email-verification: false
+  rate-limit:
+    auth-per-minute: 1000
