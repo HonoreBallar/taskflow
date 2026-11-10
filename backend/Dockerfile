@@ -7,7 +7,7 @@ COPY src ./src
 RUN mvn -B -q package -DskipTests
 
 # ---- Run ----
-FROM eclipse-temurin:17-jre
+FROM eclipse-temurin:25-jre
 WORKDIR /app
 RUN useradd -r -u 1001 taskflow && mkdir -p /app/uploads && chown taskflow /app/uploads
 COPY --from=build /app/target/taskflow-backend-*.jar app.jar
