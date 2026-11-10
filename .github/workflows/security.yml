@@ -45,6 +45,7 @@ jobs:
           scan-ref: .
           scanners: vuln,misconfig
           skip-files: backend/pom.xml
+          trivyignores: .trivyignore.yaml
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           exit-code: 1

@@ -10,7 +10,13 @@ RUN npx ng build --configuration production
 # ---- Servir avec Nginx ----
 # Image non privilégiée : Nginx tourne sous l'utilisateur « nginx » (UID 101) et écoute sur 8080,
 # jamais en root. Une faille dans le serveur web ne donne donc pas les droits root dans le conteneur.
-FROM nginxinc/nginx-unprivileged:1.27-alpine
+FROM nginxinc/nginx-unprivileged:1.30-alpine
+# Correctifs de sécurité des paquets système parus depuis la publication de l'image de base
+USER root
+# hadolint ignore=DL3017
+RUN apk upgrade --no-cache
+# Retour à l'utilisateur non privilégié de l'image de base (nginx, UID 101)
+USER 101
 # Proxy dont l'en-tête X-Forwarded-For est digne de confiance (aucun par défaut)
 ENV TRUSTED_PROXY=127.0.0.1
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template

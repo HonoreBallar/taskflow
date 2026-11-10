@@ -12,6 +12,12 @@ updates:
       backend:
         patterns: ['*']
         update-types: [minor, patch]
+    ignore:
+      # Spring Boot 4 (et springdoc 3 qui va avec) est une migration à part entière, pas une PR automatique
+      - dependency-name: 'org.springframework.boot:*'
+        update-types: [version-update:semver-major]
+      - dependency-name: 'org.springdoc:*'
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: npm
     directory: /frontend
@@ -49,12 +55,24 @@ updates:
     schedule:
       interval: weekly
       day: monday
+    ignore:
+      # Java 17 et Node 22 sont les versions du projet (pom.xml, CI) : en changer se décide, ça ne se fusionne pas
+      - dependency-name: 'maven'
+        update-types: [version-update:semver-major]
+      - dependency-name: 'eclipse-temurin'
+        update-types: [version-update:semver-major]
+      - dependency-name: 'node'
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: docker-compose
     directory: /
     schedule:
       interval: weekly
       day: monday
+    ignore:
+      # Changer de version majeure de PostgreSQL exige de migrer les données (pg_upgrade ou dump/restore)
+      - dependency-name: 'postgres'
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: github-actions
     directory: /

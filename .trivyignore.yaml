@@ -1,0 +1,12 @@
+# Vulnérabilités acceptées temporairement par les scans Trivy de la CI.
+# Chaque entrée a une justification et une date d'expiration : passé cette date, le scan échoue de nouveau.
+vulnerabilities:
+  # Spring Framework 6.2 (Spring Boot 3.5) ne reçoit plus de correctif : seul Spring Framework 7 (Spring Boot 4)
+  # est corrigé. Les deux failles concernent des fonctions que TaskFlow n'utilise pas. À lever en migrant
+  # vers Spring Boot 4.
+  - id: CVE-2026-47884
+    statement: Exécution de code via XsltView. L'API ne renvoie que du JSON, aucune vue XSLT n'est configurée.
+    expired_at: 2027-02-01
+  - id: CVE-2026-47890
+    statement: Corruption de flux Server-Sent Events avec des vues. L'API n'utilise ni SSE ni vues.
+    expired_at: 2027-02-01

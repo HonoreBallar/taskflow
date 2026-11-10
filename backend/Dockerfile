@@ -9,7 +9,9 @@ RUN mvn -B -q package -DskipTests
 # ---- Run ----
 FROM eclipse-temurin:17-jre
 WORKDIR /app
-RUN useradd -r -u 1001 taskflow && mkdir -p /app/uploads && chown taskflow /app/uploads
+# Correctifs de sécurité des paquets système parus depuis la publication de l'image de base
+RUN apt-get update && apt-get upgrade -y --no-install-recommends && rm -rf /var/lib/apt/lists/* \
+    && useradd -r -u 1001 taskflow && mkdir -p /app/uploads && chown taskflow /app/uploads
 COPY --from=build /app/target/taskflow-backend-*.jar app.jar
 # UID numérique (celui de « taskflow ») : vérifiable par un orchestrateur sans lire /etc/passwd
 USER 1001
