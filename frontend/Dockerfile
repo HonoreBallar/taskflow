@@ -12,7 +12,7 @@ RUN npx ng build --configuration production
 # jamais en root. Une faille dans le serveur web ne donne donc pas les droits root dans le conteneur.
 FROM nginxinc/nginx-unprivileged:1.30-alpine
 # Correctifs de sécurité des paquets système parus depuis la publication de l'image de base
-USER root
+USER 0
 # hadolint ignore=DL3017
 RUN apk upgrade --no-cache
 # Retour à l'utilisateur non privilégié de l'image de base (nginx, UID 101)

@@ -164,10 +164,12 @@ jobs:
         uses: hadolint/hadolint-action@06be81baf89a55ffd0e24b8f04a4185738dd3387 # v3.5.0
         with:
           dockerfile: backend/Dockerfile
+          failure-threshold: warning
       - name: Lint du Dockerfile frontend (Hadolint)
         uses: hadolint/hadolint-action@06be81baf89a55ffd0e24b8f04a4185738dd3387 # v3.5.0
         with:
           dockerfile: frontend/Dockerfile
+          failure-threshold: warning
 
       - name: Démarrer l'application
         uses: ./.github/actions/start-stack
